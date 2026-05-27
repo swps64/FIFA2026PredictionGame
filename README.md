@@ -1,5 +1,9 @@
 # ⚽ 2026 世界盃預測遊戲
 
+<img width="772" height="611" alt="image" src="https://github.com/user-attachments/assets/8050b225-99c3-4c5d-8209-840e61e6ff79" />
+<img width="756" height="606" alt="image" src="https://github.com/user-attachments/assets/c763254f-2bd5-403b-a505-3c517b952789" />
+
+
 > **100% 由 GitHub Copilot AI Agent 生成** — 從前端 UI、API 邏輯、資料庫設計到雲端部署，全程零手寫程式碼。
 
 一個多人世界盃預測遊戲，支援多房間隔離、即時排行榜、管理員後台，部署於 Azure Static Web Apps + Cosmos DB。
