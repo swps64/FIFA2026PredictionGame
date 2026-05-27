@@ -1,0 +1,8 @@
+{
+  "name": "worldcup-game-2026",
+  "version": "1.0.0",
+  "description": "2026 FIFA World Cup Prediction Game",
+  "scripts": {
+    "build": "echo no build step"
+  }
+}

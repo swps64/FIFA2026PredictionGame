@@ -1,0 +1,14 @@
+{
+  "$schema": "https://aka.ms/azure/static-web-apps-cli/schema",
+  "configurations": {
+    "worldcup": {
+      "appLocation": ".",
+      "apiLocation": "api",
+      "outputLocation": "dist",
+      "apiLanguage": "node",
+      "apiVersion": "20",
+      "run": "npx serve . -p 3000",
+      "appDevserverUrl": "http://localhost:3000"
+    }
+  }
+}

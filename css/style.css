@@ -1,0 +1,172 @@
+/* style.css - 2026 世界盃預測遊戲自訂樣式 */
+
+/* ── 分頁按鈕 ── */
+.tab-btn {
+  padding: 0.6rem 1.2rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #9ca3af;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+  cursor: pointer;
+  background: transparent;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+.tab-btn:hover { color: #f5f5f5; }
+.tab-btn.tab-active {
+  color: #fbbf24;
+  border-bottom-color: #fbbf24;
+}
+
+/* ── 隊伍卡片 ── */
+.team-card {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 0.5rem;
+  background: #1f2937;
+  border: 1.5px solid #374151;
+  cursor: pointer;
+  transition: all 0.12s;
+  text-align: left;
+  width: 100%;
+  user-select: none;
+}
+.team-card:hover:not(.locked) {
+  border-color: #6b7280;
+  background: #273040;
+}
+.team-card.selected {
+  background: #1a3a2a;
+  border-color: #22c55e;
+  box-shadow: 0 0 0 1px #22c55e44;
+}
+.team-card.selected .team-name {
+  color: #86efac;
+}
+.team-card.locked {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.flag {
+  width: 28px;
+  height: 20px;
+  object-fit: cover;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.team-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #e5e7eb;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.team-rank {
+  font-size: 0.7rem;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+/* ── 分組佈局 (Stage 0) ── */
+.groups-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+@media (min-width: 640px) {
+  .groups-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (min-width: 1024px) {
+  .groups-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ── 階段 1-5 隊伍格 ── */
+.teams-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+@media (min-width: 480px) {
+  .teams-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (min-width: 768px) {
+  .teams-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+@media (min-width: 1024px) {
+  .teams-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+/* ── 階段區塊分隔線 ── */
+.stage-section {
+  border-top: 1px solid #374151;
+  padding-top: 1.5rem;
+}
+.stage-section:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+/* ── 提交按鈕 ── */
+.btn-primary {
+  background-color: #fbbf24;
+  color: #111827;
+}
+.btn-primary:hover {
+  background-color: #f59e0b;
+}
+.btn-disabled {
+  background-color: #374151;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+/* ── 排行榜表格 ── */
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.leaderboard-table th {
+  background: #1f2937;
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  color: #9ca3af;
+  font-weight: 600;
+  border-bottom: 1px solid #374151;
+}
+.leaderboard-table td {
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid #1f2937;
+}
+.leaderboard-table tr:hover td {
+  background: #1f2937;
+}
+.leaderboard-table tr.my-row td {
+  background: #1a2f3a;
+  color: #67e8f9;
+}
+
+/* ── 捲軸美化 ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #111827; }
+::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #4b5563; }

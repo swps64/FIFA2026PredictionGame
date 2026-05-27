@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>世界盃預測 — Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background: #0f172a; color: #e2e8f0; font-family: system-ui, sans-serif; }
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 0.75rem; padding: 1.5rem; }
+    .btn  { padding: 0.5rem 1.25rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: opacity .15s; }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: #0ea5e9; color: #fff; }
+    .btn-danger  { background: #ef4444; color: #fff; }
+    .btn-gray    { background: #475569; color: #fff; }
+    input, select { background: #0f172a; border: 1px solid #475569; border-radius: 0.375rem;
+                    padding: 0.5rem 0.75rem; color: #e2e8f0; width: 100%; }
+    input:focus, select:focus { outline: 2px solid #0ea5e9; border-color: transparent; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #0f172a; padding: 0.6rem 0.75rem; text-align: left; font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; }
+    td { padding: 0.6rem 0.75rem; border-bottom: 1px solid #1e293b; }
+    .tag { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+    .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: #1e293b; border: 1px solid #334155;
+             border-radius: 0.5rem; padding: 0.75rem 1.25rem; z-index: 999; transition: opacity .3s; }
+  </style>
+</head>
+<body class="min-h-screen p-6">
+
+<!-- Login Modal -->
+<div id="admin-login" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+  <div class="card w-full max-w-sm">
+    <h2 class="text-xl font-bold mb-4 text-cyan-400">🔐 Admin 登入</h2>
+    <input id="admin-pw" type="password" placeholder="輸入 Admin 密語" class="mb-3" />
+    <p id="admin-pw-error" class="text-red-400 text-sm mb-3 hidden">❌ 密語錯誤</p>
+    <button id="admin-login-btn" class="btn btn-primary w-full">登入</button>
+  </div>
+</div>
+
+<!-- Main Admin UI -->
+<div id="admin-ui" class="hidden max-w-5xl mx-auto space-y-6">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold text-cyan-400">⚙️ 世界盃預測 Admin</h1>
+    <button id="btn-logout-admin" class="btn btn-gray text-sm">登出</button>
+  </div>
+
+  <!-- ① 房間管理 -->
+  <div class="card">
+    <h2 class="text-lg font-bold mb-4">🏠 房間管理</h2>
+    <div id="rooms-table-wrap">載入中…</div>
+
+    <hr class="border-slate-700 my-4" />
+    <h3 class="font-semibold mb-3 text-cyan-300">新增房間</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+      <div>
+        <label class="text-xs text-slate-400 mb-1 block">通關密語（玩家輸入）</label>
+        <input id="new-room-pw" type="text" placeholder="例：SOCCER2026" />
+      </div>
+      <div>
+        <label class="text-xs text-slate-400 mb-1 block">房間 ID（小寫英數）</label>
+        <input id="new-room-id" type="text" placeholder="例：soccer2026" />
+      </div>
+      <div>
+        <label class="text-xs text-slate-400 mb-1 block">顯示名稱</label>
+        <input id="new-room-name" type="text" placeholder="例：足球同好會" />
+      </div>
+    </div>
+    <p id="room-error" class="text-red-400 text-sm mb-2 hidden"></p>
+    <button id="btn-create-room" class="btn btn-primary">+ 建立房間</button>
+  </div>
+
+  <!-- ② 賽果管理 -->
+  <div class="card">
+    <h2 class="text-lg font-bold mb-1">⚽ 賽果管理</h2>
+    <p class="text-slate-400 text-sm mb-4">每個欄位填入晉級隊伍代碼，以逗號分隔（例：BRA,FRA,ARG）</p>
+
+    <div class="space-y-3" id="results-form">
+      <!-- 動態產生 -->
+    </div>
+    <p id="results-error" class="text-red-400 text-sm mt-2 hidden"></p>
+    <button id="btn-save-results" class="btn btn-primary mt-4">儲存賽果</button>
+  </div>
+
+  <!-- ③ 玩家預測查看 -->
+  <div class="card">
+    <h2 class="text-lg font-bold mb-4">👥 玩家預測</h2>
+    <div class="flex gap-3 mb-4">
+      <select id="pred-room-select" class="max-w-xs">
+        <option value="">選擇房間…</option>
+      </select>
+      <button id="btn-load-preds" class="btn btn-gray">載入</button>
+    </div>
+    <div id="preds-table-wrap"></div>
+  </div>
+
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script type="module" src="js/admin.js"></script>
+</body>
+</html>

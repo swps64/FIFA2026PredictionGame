@@ -1,0 +1,17 @@
+{
+  "name": "worldcup-api",
+  "version": "1.0.0",
+  "description": "Azure Functions API for WorldCup Game 2026",
+  "main": "src/functions/*.js",
+  "scripts": {
+    "start": "func start",
+    "build": "echo no build step"
+  },
+  "dependencies": {
+    "@azure/cosmos": "^4.1.1",
+    "@azure/functions": "^4.5.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

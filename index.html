@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2026 世界盃預測遊戲</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: '#f5a623',
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+
+  <!-- ═══════ 頂部標頭 ═══════ -->
+  <header class="sticky top-0 z-30 bg-gray-950 border-b border-gray-700 shadow-lg">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <span class="text-2xl">⚽</span>
+        <div>
+          <h1 class="text-base font-bold leading-tight text-yellow-400">2026 世界盃預測</h1>
+          <p class="text-xs text-gray-400">FIFA World Cup Canada·Mexico·USA 2026</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-xs text-gray-400">玩家：</span>
+        <span id="user-display" class="text-sm font-semibold text-yellow-300">—</span>
+        <span id="progress-text" class="text-xs text-gray-500 hidden sm:block"></span>
+        <button id="btn-logout"
+          class="text-xs text-gray-500 hover:text-red-400 transition" title="登出">
+          登出
+        </button>
+        <button id="btn-random-picks"
+          class="px-2 py-1.5 rounded-lg text-xs font-semibold text-purple-400 hover:text-purple-300 border border-purple-800 hover:border-purple-500 transition">
+          <span class="sm:hidden">🎲 亂選</span><span class="hidden sm:inline">🎲 幫我亂選</span>
+        </button>
+        <button id="btn-reset-picks"
+          class="px-2 py-1.5 rounded-lg text-xs font-semibold text-gray-400 hover:text-red-400 border border-gray-600 hover:border-red-500 transition">
+          <span class="sm:hidden">🗑 重填</span><span class="hidden sm:inline">🗑 重填</span>
+        </button>
+        <button id="btn-submit"
+          class="hidden sm:inline-flex btn-disabled px-4 py-1.5 rounded-lg text-sm font-bold transition"
+          disabled>
+          提交預測
+        </button>
+      </div>
+    </div>
+
+    <!-- 分頁標籤 -->
+    <div class="max-w-5xl mx-auto px-4 flex border-t border-gray-700">
+      <button class="tab-btn tab-active" data-tab="picks">我的預測</button>
+      <button class="tab-btn" data-tab="results">賽事結果</button>
+      <button class="tab-btn" data-tab="leaderboard">排行榜</button>
+      <button class="tab-btn" data-tab="about">關於</button>
+    </div>
+  </header>
+
+  <!-- ═══════ 手機版固定底部提交列 ═══════ -->
+  <div id="mobile-submit-bar" class="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-gray-950 border-t border-gray-700 px-4 py-3">
+    <button id="btn-submit-mobile"
+      class="btn-disabled w-full py-3 rounded-xl text-base font-bold transition"
+      disabled>
+      提交預測
+    </button>
+  </div>
+
+  <!-- ═══════ 鎖定提醒 ═══════ -->
+  <div id="lock-banner" class="hidden bg-red-900 border-b border-red-700 text-center py-2 text-sm text-red-200">
+    🔒 比賽已開始，預測已鎖定，僅供查看
+  </div>
+
+  <!-- ═══════ 主內容 ═══════ -->
+  <main class="max-w-5xl mx-auto px-4 py-6 pb-24 sm:pb-6">
+
+    <!-- ── 我的預測分頁 ── -->
+    <div id="panel-picks" class="tab-panel">
+
+      <!-- 賽制說明 -->
+      <div class="mb-4 bg-gray-800 rounded-xl p-4 border border-gray-700">
+        <h2 class="text-sm font-bold text-yellow-400 mb-3">🏆 2026 世界盃賽制總覽</h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-gray-300 border-separate border-spacing-y-1">
+            <thead>
+              <tr class="text-gray-500">
+                <th class="text-left py-1 pr-3 font-semibold w-28">階段</th>
+                <th class="text-left py-1 pr-3 font-semibold">說明</th>
+                <th class="text-right py-1 font-semibold whitespace-nowrap">晉級隊數</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="bg-gray-700/40 rounded">
+                <td class="py-1.5 pr-3 pl-2 rounded-l font-semibold text-white">小組賽</td>
+                <td class="py-1.5 pr-3 text-gray-300">
+                  48隊分12組（A–L），每組4隊各打3場。
+                  每組前2名直接晉級，加上8支最佳第3名，共32隊進入淘汰賽。
+                </td>
+                <td class="py-1.5 pl-2 rounded-r text-right text-yellow-300 font-bold whitespace-nowrap">48 → 32</td>
+              </tr>
+              <tr class="bg-gray-700/40 rounded">
+                <td class="py-1.5 pr-3 pl-2 rounded-l font-semibold text-white">32強</td>
+                <td class="py-1.5 pr-3 text-gray-300">單淘汰，32隊打16場，勝者晉16強。</td>
+                <td class="py-1.5 pl-2 rounded-r text-right text-yellow-300 font-bold whitespace-nowrap">32 → 16</td>
+              </tr>
+              <tr class="bg-gray-700/40 rounded">
+                <td class="py-1.5 pr-3 pl-2 rounded-l font-semibold text-white">16強</td>
+                <td class="py-1.5 pr-3 text-gray-300">單淘汰，16隊打8場，勝者晉8強。</td>
+                <td class="py-1.5 pl-2 rounded-r text-right text-yellow-300 font-bold whitespace-nowrap">16 → 8</td>
+              </tr>
+              <tr class="bg-gray-700/40 rounded">
+                <td class="py-1.5 pr-3 pl-2 rounded-l font-semibold text-white">8強（準四）</td>
+                <td class="py-1.5 pr-3 text-gray-300">單淘汰，8隊打4場，勝者晉4強。</td>
+                <td class="py-1.5 pl-2 rounded-r text-right text-yellow-300 font-bold whitespace-nowrap">8 → 4</td>
+              </tr>
+              <tr class="bg-gray-700/40 rounded">
+                <td class="py-1.5 pr-3 pl-2 rounded-l font-semibold text-white">4強（準決）</td>
+                <td class="py-1.5 pr-3 text-gray-300">單淘汰，4隊打2場，勝者晉決賽。</td>
+                <td class="py-1.5 pl-2 rounded-r text-right text-yellow-300 font-bold whitespace-nowrap">4 → 2</td>
+              </tr>
+              <tr class="bg-gray-700/40 rounded">
+                <td class="py-1.5 pr-3 pl-2 rounded-l font-semibold text-yellow-300">🏆 決賽</td>
+                <td class="py-1.5 pr-3 text-gray-300">2026/7/19 MetLife Stadium，決出世界冠軍。</td>
+                <td class="py-1.5 pl-2 rounded-r text-right text-yellow-300 font-bold whitespace-nowrap">2 → 1</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 計分說明 -->
+      <div class="mb-4 text-sm text-gray-400 bg-gray-800 rounded-lg p-3 border border-gray-700">
+        <strong class="text-yellow-300">📋 計分規則：</strong>
+        逐階段勾選你認為會晉級的隊伍。選對一支隊伍晉級
+        <span class="text-white">32強 +1分、16強 +2分、8強 +4分、4強 +8分、準決賽 +16分、冠軍 +32分</span>。
+        <span class="text-gray-500">滿分 192 分。</span>
+        <br class="mt-1">
+        ⚠️ 取消上一階段的勾選，該隊在後續階段也會一併取消。草稿自動儲存。
+        <strong class="text-red-400 ml-1">🔒 鎖定時間：2026/6/11 09:00 台北時間</strong>。
+      </div>
+      <div id="picker-container"></div>
+    </div>
+
+    <!-- ── 賽事結果分頁 ── -->
+    <div id="panel-results" class="tab-panel hidden">
+      <div id="results-container"></div>
+    </div>
+
+    <!-- ── 排行榜分頁 ── -->
+    <div id="panel-leaderboard" class="tab-panel hidden">
+      <div id="leaderboard-container"></div>
+    </div>
+
+    <!-- ── 關於分頁 ── -->
+    <div id="panel-about" class="tab-panel hidden">
+      <div class="max-w-2xl mx-auto space-y-6 py-2">
+
+        <!-- 主標題卡 -->
+        <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700 text-center">
+          <div class="text-5xl mb-3">⚽</div>
+          <h2 class="text-2xl font-bold text-yellow-400 mb-1">2026 世界盃預測遊戲</h2>
+          <p class="text-gray-400 text-sm">FIFA World Cup Canada · Mexico · USA 2026</p>
+        </div>
+
+        <!-- Copilot Agent 介紹 -->
+        <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 border border-purple-800/60">
+          <div class="flex items-center gap-3 mb-4">
+            <span class="text-3xl">🤖</span>
+            <div>
+              <h3 class="text-lg font-bold text-purple-300">100% AI 生成</h3>
+              <p class="text-xs text-gray-400">Built entirely with GitHub Copilot Agent</p>
+            </div>
+          </div>
+          <p class="text-gray-300 text-sm leading-relaxed mb-4">
+            這個網站的每一行程式碼，都是由
+            <span class="text-purple-300 font-semibold">GitHub Copilot AI Agent</span>
+            在 VS Code 中自動生成的——從前端 UI、API 邏輯、資料庫設計到雲端部署，全程無需手動撰寫程式碼。
+          </p>
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <div class="bg-gray-700/50 rounded-xl p-3 border border-gray-600">
+              <div class="text-purple-400 font-semibold mb-1">🛠️ 開發工具</div>
+              <div class="text-gray-300">VS Code + GitHub Copilot Agent Mode</div>
+            </div>
+            <div class="bg-gray-700/50 rounded-xl p-3 border border-gray-600">
+              <div class="text-purple-400 font-semibold mb-1">☁️ 雲端平台</div>
+              <div class="text-gray-300">Azure Static Web Apps + Cosmos DB</div>
+            </div>
+            <div class="bg-gray-700/50 rounded-xl p-3 border border-gray-600">
+              <div class="text-purple-400 font-semibold mb-1">⏱️ 開發時間</div>
+              <div class="text-gray-300">數小時（對話驅動開發）</div>
+            </div>
+            <div class="bg-gray-700/50 rounded-xl p-3 border border-gray-600">
+              <div class="text-purple-400 font-semibold mb-1">📝 手寫程式碼</div>
+              <div class="text-gray-300 font-bold text-green-400">0 行</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 技術棧 -->
+        <div class="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+          <h3 class="text-base font-bold text-yellow-400 mb-4">🏗️ 技術架構</h3>
+          <div class="space-y-2 text-sm">
+            <div class="flex items-start gap-3 py-2 border-b border-gray-700/60">
+              <span class="text-yellow-300 w-5 flex-shrink-0">⚡</span>
+              <div><span class="text-white font-semibold">前端</span><span class="text-gray-400 ml-2">Vanilla JS + Tailwind CSS，無框架依賴</span></div>
+            </div>
+            <div class="flex items-start gap-3 py-2 border-b border-gray-700/60">
+              <span class="text-blue-400 w-5 flex-shrink-0">🔧</span>
+              <div><span class="text-white font-semibold">後端 API</span><span class="text-gray-400 ml-2">Azure Functions (Node.js 20)，Managed Functions</span></div>
+            </div>
+            <div class="flex items-start gap-3 py-2 border-b border-gray-700/60">
+              <span class="text-green-400 w-5 flex-shrink-0">🗄️</span>
+              <div><span class="text-white font-semibold">資料庫</span><span class="text-gray-400 ml-2">Azure Cosmos DB (NoSQL，Free Tier Serverless)</span></div>
+            </div>
+            <div class="flex items-start gap-3 py-2">
+              <span class="text-purple-400 w-5 flex-shrink-0">🌐</span>
+              <div><span class="text-white font-semibold">部署</span><span class="text-gray-400 ml-2">Azure Static Web Apps + Azure Developer CLI (azd)</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 底部 -->
+        <div class="text-center text-xs text-gray-600 pb-2">
+          Made with 🤖 GitHub Copilot · 2026
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ═══════ 姓名輸入 Modal ═══════ -->
+  <div id="modal-name"
+    class="modal-overlay hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+    <div class="bg-gray-800 rounded-2xl p-8 w-full max-w-sm shadow-2xl border border-gray-600">
+
+      <!-- ── Step 1：通關密語 ── -->
+      <div id="modal-step-password">
+        <h2 class="text-xl font-bold text-yellow-400 mb-1">🔐 通關密語</h2>
+        <p class="text-sm text-gray-400 mb-5">請輸入主辦人提供的通關密語才能進入遊戲</p>
+        <input
+          id="input-password"
+          type="text"
+          maxlength="20"
+          placeholder="輸入密語…"
+          autocomplete="off"
+          class="w-full bg-gray-700 border border-gray-500 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-yellow-400 mb-2 tracking-widest text-center text-lg uppercase">
+        <p id="password-error" class="hidden text-red-400 text-xs mb-2">❌ 密語錯誤，請再試一次</p>
+        <button id="btn-check-password"
+          class="w-full bg-yellow-400 hover:bg-yellow-300 text-gray-900 font-bold py-2 rounded-lg transition">
+          確認
+        </button>
+      </div>
+
+      <!-- ── Step 2：輸入代號 ── -->
+      <div id="modal-step-alias" class="hidden">
+        <h2 class="text-xl font-bold text-yellow-400 mb-1">👤 帳號 Alias</h2>
+        <p class="text-sm text-gray-400 mb-4">若曾登入過，你的預測將自動帶入</p>
+        <input
+          id="input-alias"
+          type="text"
+          maxlength="20"
+          placeholder="例如：小明"
+          autocomplete="off"
+          pattern="[A-Za-z0-9_\-]{2,20}"
+          inputmode="latin"
+          class="w-full bg-gray-700 border border-gray-500 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-yellow-400 mb-1">
+        <p class="text-xs text-gray-600 mb-3">大小寫英文、數字、_ 或 -，2–20 字元</p>
+        <p id="alias-error" class="hidden text-red-400 text-xs mb-2"></p>
+        <!-- 舊用戶：顯示歡迎回來 -->
+        <div id="alias-returning" class="hidden mb-3 p-3 bg-green-900/40 border border-green-700 rounded-lg">
+          <p class="text-green-300 text-sm font-semibold">👋 歡迎回來！</p>
+          <p id="alias-returning-name" class="text-green-400 text-xs mt-0.5"></p>
+        </div>
+        <button id="btn-alias-next"
+          class="w-full bg-yellow-400 hover:bg-yellow-300 text-gray-900 font-bold py-2 rounded-lg transition">
+          下一步
+        </button>
+      </div>
+
+      <!-- ── Step 3：新用戶輸入暱稱 ── -->
+      <div id="modal-step-nickname" class="hidden">
+        <h2 class="text-xl font-bold text-yellow-400 mb-1">✏️ 設定顯示名稱</h2>
+        <p class="text-sm text-gray-400 mb-4">這個名稱會顯示在排行榜上，之後可用代號重新登入</p>
+        <label class="block text-xs text-gray-400 mb-1">排行榜顯示名稱</label>
+        <input
+          id="input-nickname"
+          type="text"
+          maxlength="20"
+          placeholder="例如：壹西千"
+          class="w-full bg-gray-700 border border-gray-500 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-yellow-400 mb-2">
+        <p id="register-error" class="hidden text-red-400 text-xs mb-2"></p>
+        <button id="btn-save-name"
+          class="w-full bg-yellow-400 hover:bg-yellow-300 text-gray-900 font-bold py-2 rounded-lg transition">
+          開始遊戲 ⚽
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════ 通用訊息 Modal ═══════ -->
+  <div id="modal-message"
+    class="modal-overlay hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+    <div class="bg-gray-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl border border-gray-600">
+      <h2 id="modal-msg-title" class="text-lg font-bold text-yellow-400 mb-3"></h2>
+      <p id="modal-msg-body" class="text-sm text-gray-300 whitespace-pre-line mb-5"></p>
+      <button id="btn-close-modal"
+        class="w-full bg-gray-600 hover:bg-gray-500 text-white font-semibold py-2 rounded-lg transition">
+        關閉
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════ JavaScript ═══════ -->
+  <script type="module" src="js/app.js"></script>
+  <!-- 開發用假資料工具，部署前可移除 -->
+  <script src="js/dev-seed.js"></script>
+</body>
+</html>
