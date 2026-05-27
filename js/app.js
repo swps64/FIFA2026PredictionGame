@@ -1,6 +1,6 @@
 // app.js - 主流程：分頁切換、用戶名稱、提交
 
-import { loadDraft, loadUser, saveUser, loadProfile, saveProfile } from './draft.js';
+import { loadDraft, saveDraft, loadUser, saveUser, loadProfile, saveProfile } from './draft.js';
 import { initPicker, getPicksArray, isComplete, getValidationErrors, onPicksChanged, resetPicks, randomPicks } from './picker.js';
 import { LOCK_TIME, TEAMS, STAGE_NAMES, STAGE_SIZES, STAGE_POINTS } from './data.js';
 import { calcScore } from './scoring.js';
@@ -89,7 +89,7 @@ function promptUser() {
   const returningBox    = document.getElementById('alias-returning');
   const returningName   = document.getElementById('alias-returning-name');
 
-  // 即時顯示是否為舊用戶
+  // 即時顯示是否為舊用戶（本機 localStorage）
   aliasInput.addEventListener('input', () => {
     const alias = aliasInput.value.trim();
     const profile = /^[A-Za-z0-9_-]{2,20}$/.test(alias) ? loadProfile(alias) : null;
@@ -101,7 +101,7 @@ function promptUser() {
     }
   });
 
-  function goToNextFromAlias() {
+  async function goToNextFromAlias() {
     const alias = aliasInput.value.trim();
     if (!alias) {
       aliasError.textContent = '❌ 請輸入代號';
@@ -115,16 +115,43 @@ function promptUser() {
     }
     aliasError.classList.add('hidden');
 
-    const profile = loadProfile(alias);
-    if (profile) {
-      // 舊用戶：直接登入
-      saveProfile(alias, profile.nickname);
-      saveUser({ alias, nickname: profile.nickname, roomId: currentRoomId });
-      document.getElementById('user-display').textContent = profile.nickname;
+    // 先查本機 localStorage
+    const localProfile = loadProfile(alias);
+
+    // 再查伺服器：此 alias 在此房間是否已有提交紀錄
+    let serverNickname = null;
+    let serverPicks = null;
+    try {
+      const res = await fetch(`/api/predictions?roomId=${encodeURIComponent(currentRoomId)}&alias=${encodeURIComponent(alias)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.userName) {
+          serverNickname = data.userName;
+          serverPicks = data.picks || null;
+        }
+      }
+    } catch { /* 網路錯誤時 fallback 到本機判斷 */ }
+
+    if (serverNickname) {
+      // 伺服器有此 alias 的提交紀錄 → 視為回頭用戶，採用 DB 裡的暱稱（防止暱稱被竄改）
+      const nickname = serverNickname;
+      saveProfile(alias, nickname);
+      saveUser({ alias, nickname, roomId: currentRoomId });
+      if (serverPicks) saveDraft(serverPicks);  // 把伺服器的 picks 存到本機草稿
+      document.getElementById('user-display').textContent = nickname;
       modal.classList.add('hidden');
       loadPickerTab();
+      showModal(`👋 歡迎回來，${nickname}！`, '你的預測草稿已自動載入，可以繼續修改或重新提交。');
+    } else if (localProfile) {
+      // 本機有紀錄但伺服器無提交（曾登入但未提交）→ 允許繼續
+      saveProfile(alias, localProfile.nickname);
+      saveUser({ alias, nickname: localProfile.nickname, roomId: currentRoomId });
+      document.getElementById('user-display').textContent = localProfile.nickname;
+      modal.classList.add('hidden');
+      loadPickerTab();
+      showModal(`👋 歡迎回來，${localProfile.nickname}！`, '找到你的本機紀錄，繼續填寫預測吧！');
     } else {
-      // 新用戶：進到暱稱步驟
+      // 全新用戶：進到暱稱步驟
       document.getElementById('modal-step-alias').classList.add('hidden');
       document.getElementById('modal-step-nickname').classList.remove('hidden');
       document.getElementById('input-nickname').focus();
