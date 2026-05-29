@@ -1,7 +1,10 @@
 // js/admin.js — Admin 後台邏輯
+import { TEAMS, GROUPS } from './data.js';
 
 const STAGE_NAMES = ['32強', '16強', '8強', '4強', '決賽', '冠軍'];
 const STAGE_SIZES = [32, 16, 8, 4, 2, 1];
+
+let currentResults = [[], [], [], [], [], []];
 
 let adminToken = null;   // = ADMIN_PASSWORD_HASH（sha256 of admin password）
 
@@ -132,47 +135,116 @@ window.deleteRoom = async function(hash) {
 
 // ── ② 賽果管理 ──────────────────────────────────────────
 async function loadResultsForm() {
-  const form = document.getElementById('results-form');
-  // 載入現有賽果
-  let current = [[], [], [], [], [], []];
   try {
     const data = await fetch('/api/results').then(r => r.json());
-    if (Array.isArray(data)) current = data;
+    if (Array.isArray(data)) currentResults = data;
   } catch {}
-
-  form.innerHTML = STAGE_NAMES.map((name, i) => `
-    <div>
-      <label class="text-sm font-semibold text-slate-300 mb-1 block">
-        ${name}（${STAGE_SIZES[i]} 隊）
-      </label>
-      <input id="result-${i}" type="text"
-        placeholder="${STAGE_SIZES[i]} 個隊伍代碼，逗號分隔"
-        value="${(current[i] || []).join(',')}" />
-    </div>`).join('');
+  renderResultsForm();
 }
 
-document.getElementById('btn-save-results').addEventListener('click', async () => {
-  const stageResults = STAGE_NAMES.map((_, i) => {
-    const val = document.getElementById(`result-${i}`).value.trim();
-    return val ? val.split(',').map(s => s.trim().toUpperCase()).filter(Boolean) : [];
-  });
+function renderResultsForm() {
+  const form = document.getElementById('results-form');
+  form.innerHTML = '';
+  for (let i = 0; i < 6; i++) form.appendChild(buildStageSection(i));
+}
 
-  const err = document.getElementById('results-error');
-  // 驗證：若有填則數量要符合
-  for (let i = 0; i < 6; i++) {
-    if (stageResults[i].length > 0 && stageResults[i].length !== STAGE_SIZES[i]) {
-      err.textContent = `❌ ${STAGE_NAMES[i]} 需要填 ${STAGE_SIZES[i]} 支隊伍（或留空）`;
-      err.classList.remove('hidden');
-      return;
-    }
+function buildStageSection(stageIdx) {
+  const name = STAGE_NAMES[stageIdx];
+  const size = STAGE_SIZES[stageIdx];
+  const selected = new Set(currentResults[stageIdx] || []);
+  const count = selected.size;
+
+  // 可選隊伍：第0階段全部48隊；之後只顯示上一階段的晉級隊伍
+  let availableTeams = [];
+  if (stageIdx === 0) {
+    availableTeams = TEAMS;
+  } else {
+    availableTeams = (currentResults[stageIdx - 1] || [])
+      .map(code => TEAMS.find(t => t.code === code)).filter(Boolean);
   }
-  err.classList.add('hidden');
+
+  const countColor = count === size ? 'text-green-400' : count > 0 ? 'text-orange-400' : 'text-slate-400';
+
+  const section = document.createElement('div');
+  section.className = 'border border-slate-700 rounded-lg p-4';
+
+  // 標題列
+  const header = document.createElement('div');
+  header.className = 'flex items-center justify-between mb-3';
+  header.innerHTML = `
+    <div class="flex items-center gap-3">
+      <h3 class="font-bold text-white">▶ ${name}（應選 ${size} 隊）</h3>
+      <span class="text-sm ${countColor}" id="stage-count-${stageIdx}">${count} / ${size} 已選</span>
+    </div>
+    <button class="btn btn-primary text-sm py-1 px-3" onclick="saveStage(${stageIdx})">儲存 ${name}</button>
+  `;
+  section.appendChild(header);
+
+  // 勾選區
+  const body = document.createElement('div');
+  if (stageIdx > 0 && availableTeams.length === 0) {
+    body.innerHTML = `<p class="text-slate-500 text-sm">⬆️ 請先儲存「${STAGE_NAMES[stageIdx - 1]}」的晉級隊伍</p>`;
+  } else if (stageIdx === 0) {
+    // 按組別分開顯示
+    GROUPS.forEach(g => {
+      const groupTeams = TEAMS.filter(t => t.group === g);
+      const groupWrap = document.createElement('div');
+      groupWrap.className = 'mb-2';
+      groupWrap.innerHTML = `<div class="text-xs text-slate-500 font-bold mb-1">分組 ${g}</div>`;
+      const grid = document.createElement('div');
+      grid.className = 'grid grid-cols-2 sm:grid-cols-4 gap-1';
+      groupTeams.forEach(team => grid.appendChild(makeCheckbox(stageIdx, team, selected.has(team.code))));
+      groupWrap.appendChild(grid);
+      body.appendChild(groupWrap);
+    });
+  } else {
+    const grid = document.createElement('div');
+    grid.className = 'grid grid-cols-2 sm:grid-cols-4 gap-1';
+    availableTeams.forEach(team => grid.appendChild(makeCheckbox(stageIdx, team, selected.has(team.code))));
+    body.appendChild(grid);
+  }
+  section.appendChild(body);
+  return section;
+}
+
+function makeCheckbox(stageIdx, team, checked) {
+  const label = document.createElement('label');
+  label.className = 'flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-slate-700/50 transition-colors';
+  label.innerHTML = `
+    <input type="checkbox" data-stage="${stageIdx}" data-code="${team.code}"
+           ${checked ? 'checked' : ''} class="w-4 h-4 accent-cyan-500 cursor-pointer"
+           onchange="updateStageCount(${stageIdx})" />
+    <img src="https://flagcdn.com/w20/${team.iso2}.png" class="w-5 h-3.5 object-cover rounded-sm" onerror="this.style.display='none'" />
+    <span class="text-sm text-slate-200">${team.name}</span>
+  `;
+  return label;
+}
+
+function updateStageCount(stageIdx) {
+  const count = document.querySelectorAll(`input[data-stage="${stageIdx}"]:checked`).length;
+  const size = STAGE_SIZES[stageIdx];
+  const el = document.getElementById(`stage-count-${stageIdx}`);
+  if (!el) return;
+  el.textContent = `${count} / ${size} 已選`;
+  el.className = `text-sm ${count === size ? 'text-green-400' : count > 0 ? 'text-orange-400' : 'text-slate-400'}`;
+}
+
+async function saveStage(stageIdx) {
+  currentResults[stageIdx] = Array.from(
+    document.querySelectorAll(`input[data-stage="${stageIdx}"]:checked`)
+  ).map(cb => cb.dataset.code);
 
   try {
-    await api('POST', 'save-results', { stageResults });
-    toast('✅ 賽果已儲存');
+    await api('POST', 'save-results', { stageResults: currentResults });
+    toast(`✅ ${STAGE_NAMES[stageIdx]} 賽果已儲存`);
+    // 重新渲染下一階段（更新可選隊伍）
+    renderResultsForm();
   } catch (e) { toast(`❌ ${e.message}`, true); }
-});
+}
+
+// ES module 中 onclick 需掛到 window
+window.saveStage = saveStage;
+window.updateStageCount = updateStageCount;
 
 // ── ③ 玩家預測查看 ──────────────────────────────────────
 document.getElementById('btn-load-preds').addEventListener('click', loadPredictions);

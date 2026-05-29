@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
   promptUser();
   initTabs();
   checkLockStatus();
+  initRenameButton();
 
   document.getElementById('btn-random-picks')?.addEventListener('click', () => {
     if (isLocked()) return;
@@ -46,6 +47,7 @@ function promptUser() {
   const user = loadUser();
   if (user) {
     document.getElementById('user-display').textContent = user.nickname;
+    document.getElementById('btn-rename').classList.remove('hidden');
     loadPickerTab();
     return;
   }
@@ -139,6 +141,7 @@ function promptUser() {
       saveUser({ alias, nickname, roomId: currentRoomId });
       if (serverPicks) saveDraft(serverPicks);  // 把伺服器的 picks 存到本機草稿
       document.getElementById('user-display').textContent = nickname;
+      document.getElementById('btn-rename').classList.remove('hidden');
       modal.classList.add('hidden');
       loadPickerTab();
       showModal(`👋 歡迎回來，${nickname}！`, '你的預測草稿已自動載入，可以繼續修改或重新提交。');
@@ -147,6 +150,7 @@ function promptUser() {
       saveProfile(alias, localProfile.nickname);
       saveUser({ alias, nickname: localProfile.nickname, roomId: currentRoomId });
       document.getElementById('user-display').textContent = localProfile.nickname;
+      document.getElementById('btn-rename').classList.remove('hidden');
       modal.classList.add('hidden');
       loadPickerTab();
       showModal(`👋 歡迎回來，${localProfile.nickname}！`, '找到你的本機紀錄，繼續填寫預測吧！');
@@ -182,6 +186,7 @@ function promptUser() {
     saveProfile(alias, nickname);
     saveUser({ alias, nickname, roomId: currentRoomId });
     document.getElementById('user-display').textContent = nickname;
+    document.getElementById('btn-rename').classList.remove('hidden');
     modal.classList.add('hidden');
     loadPickerTab();
   }
@@ -740,3 +745,80 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('modal-message').classList.add('hidden');
   });
 });
+
+// ───────────────── 改名按鈕 ─────────────────
+function initRenameButton() {
+  const btnRename   = document.getElementById('btn-rename');
+  const modal       = document.getElementById('modal-rename');
+  const input       = document.getElementById('input-rename');
+  const errEl       = document.getElementById('rename-error');
+  const btnSave     = document.getElementById('btn-rename-save');
+  const btnCancel   = document.getElementById('btn-rename-cancel');
+
+  function openModal() {
+    const user = loadUser();
+    input.value = user?.nickname || '';
+    errEl.classList.add('hidden');
+    modal.classList.remove('hidden');
+    input.focus();
+    input.select();
+  }
+
+  function closeModal() {
+    modal.classList.add('hidden');
+  }
+
+  async function doRename() {
+    const newName = input.value.trim();
+    if (!newName) {
+      errEl.textContent = '❌ 請輸入名稱';
+      errEl.classList.remove('hidden');
+      return;
+    }
+    if (newName.length > 20 || /[<>"'`]/.test(newName)) {
+      errEl.textContent = '❌ 不可含特殊符號（< > " \' `），最多 20 字';
+      errEl.classList.remove('hidden');
+      input.focus();
+      return;
+    }
+    const user = loadUser();
+    if (!user) { closeModal(); return; }
+
+    // 先更新本機
+    saveProfile(user.alias, newName);
+    saveUser({ alias: user.alias, nickname: newName, roomId: user.roomId });
+    document.getElementById('user-display').textContent = newName;
+    closeModal();
+
+    // 同步更新伺服器排行榜名稱
+    try {
+      const res = await fetch('/api/predictions', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomId: user.roomId, alias: user.alias, userName: newName }),
+      });
+      if (res.ok) {
+        loadLeaderboardTab();
+        showModal('✅ 名稱已更新', `顯示名稱已改為「${newName}」，排行榜立即生效。`);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        if (data.error === 'not found') {
+          // 尚未提交過預測，本機已更新，提交時才會出現在排行榜
+          showModal('✅ 名稱已更新', `顯示名稱已改為「${newName}」。\n（尚未提交預測，提交後將顯示在排行榜）`);
+        } else {
+          showModal('✅ 名稱已更新', `顯示名稱已改為「${newName}」。\n（伺服器同步失敗，下次提交時將更新）`);
+        }
+      }
+    } catch {
+      // 網路異常：本機已更新，靜默忽略
+    }
+  }
+
+  btnRename?.addEventListener('click', openModal);
+  btnCancel?.addEventListener('click', closeModal);
+  btnSave?.addEventListener('click', doRename);
+  input?.addEventListener('keydown', e => { if (e.key === 'Enter') doRename(); });
+
+  // 點背景關閉
+  modal?.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+}
